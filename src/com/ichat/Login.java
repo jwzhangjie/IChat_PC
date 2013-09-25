@@ -23,12 +23,13 @@ public class Login extends javax.swing.JFrame {
         initComponents();
     }
 
-    public void initConfig() throws XMPPException{
+    public void initConfig() throws XMPPException {
         config = new ConnectionConfiguration("zhangjie", 5222);
         config.setSASLAuthenticationEnabled(false);//gtalk不支持SASL验证，设置为false 
         conn = new XMPPConnection(config);
         conn.connect();
     }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -135,23 +136,24 @@ public class Login extends javax.swing.JFrame {
     private void logo_btnMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_logo_btnMouseClicked
         logoin_name = logo_name.getText().trim();
         logoin_pwd = logo_pwd.getText().trim();
-        if(logoin_name == null || logoin_pwd == null || "".equals(logoin_name) || "".equals(logoin_pwd)){
-            
-        }else{
-            if(conn == null){
-                  try {
-                         initConfig();
-                  } catch (XMPPException ex) {
-                         Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
-                 }
-            }
+        if (logoin_name == null || logoin_pwd == null || "".equals(logoin_name) || "".equals(logoin_pwd)) {
+        } else {
+            if (conn == null) {
                 try {
-                    conn.login(logoin_name, logoin_pwd);
-                    login.dispose();
-                    iChat.setVisible(true);
+                    initConfig();
                 } catch (XMPPException ex) {
                     Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
                 }
+            }
+            try {
+                conn.login(logoin_name, logoin_pwd);
+                login.dispose();
+                iChat = new IChat();
+                iChat.setConnect(conn);
+                iChat.setVisible(true);
+            } catch (XMPPException ex) {
+                Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
     }//GEN-LAST:event_logo_btnMouseClicked
 
@@ -187,8 +189,6 @@ public class Login extends javax.swing.JFrame {
             public void run() {
                 login = new Login();
                 login.setVisible(true);
-                iChat = new IChat();
-                iChat.setVisible(false);
             }
         });
     }
@@ -201,11 +201,10 @@ public class Login extends javax.swing.JFrame {
     private javax.swing.JTextField logo_name;
     private javax.swing.JPasswordField logo_pwd;
     // End of variables declaration//GEN-END:variables
-
     private String logoin_name;
     private String logoin_pwd;
     private ConnectionConfiguration config;
     private XMPPConnection conn;
-    private static IChat iChat;
+    private IChat iChat;
     private static Login login;
 }
