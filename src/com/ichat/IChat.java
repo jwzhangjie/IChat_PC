@@ -4,17 +4,12 @@
  */
 package com.ichat;
 
-import java.awt.Container;
-import java.awt.Font;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.List;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.tree.DefaultMutableTreeNode;
 import org.jivesoftware.smack.Roster;
 import org.jivesoftware.smack.RosterEntry;
 import org.jivesoftware.smack.RosterGroup;
@@ -33,78 +28,80 @@ public class IChat extends javax.swing.JFrame {
      */
     public IChat() {
         initComponents();
-        initFriends();
         setVisible(true);
     }
-    
-    public void setConnect(XMPPConnection conn){
+
+    public void setConnect(XMPPConnection conn) {
         this.conn = conn;
         getRoster();
     }
+
     /**
      * 获取用户好友
      */
-    public void getRoster(){
-        if(conn != null){
+    public void getRoster() {
+        if (conn != null) {
             roster = conn.getRoster();
             getRosterPresenceChange();
-           Collection<RosterGroup> groups = roster.getGroups();
-           for(RosterGroup group : groups){
-               System.out.println(group.getName());
-           }
-            Collection<RosterEntry> entries = roster.getEntries();
-            for(RosterEntry entry : entries){
-                System.out.println(entry);
+            Collection<RosterGroup> groups = roster.getGroups();
+            int size = groups.size();
+            treeNode = new DefaultMutableTreeNode[size];
+            int i = 0;
+            for (RosterGroup group : groups) {
+                groupsList.add(group.getName());
+                treeNode[i] = new DefaultMutableTreeNode(group.getName());
+                i++;
             }
+            Collection<RosterEntry> entries = roster.getEntries();
+            for (RosterEntry entry : entries) {
+                Collection<RosterGroup> group = entry.getGroups();
+                for (RosterGroup g : group) {
+                    if (groupsList != null) {
+                        int size_1 = groupsList.size();
+                        for (i = 0; i < size_1; i++) {
+                            if (g.getName().equals(groupsList.get(i))) {
+                                treeNode[i].add(new DefaultMutableTreeNode(entry.getName()));
+                            }
+                        }
+                    }
+                }
+            }
+            for (i = 0; i < size; i++) {
+                top.add(treeNode[i]);
+            }
+            JTree tree = new JTree(top);
+            JScrollPane scrollPane = new JScrollPane();
+            scrollPane.setViewportView(tree);
+           jTabbedPane.addTab("好 友", scrollPane);
         }
     }
-    
+
     /**
      * 注册监听状态变化
      */
-    public void getRosterPresenceChange(){
-        if(roster != null){
-            roster.addRosterListener(new RosterListener(){
+    public void getRosterPresenceChange() {
+        if (roster != null) {
+            roster.addRosterListener(new RosterListener() {
                 @Override
                 public void entriesAdded(Collection<String> addresses) {
-                    
                 }
 
                 @Override
                 public void entriesUpdated(Collection<String> addresses) {
-                    
                 }
 
                 @Override
                 public void entriesDeleted(Collection<String> addresses) {
-                    
                 }
 
                 @Override
                 public void presenceChanged(Presence prsnc) {
-                    System.out.println("Change: "+ prsnc.getFrom()+" status :"+prsnc.getStatus());
+                    System.out.println("Change: " + prsnc.getFrom() + " status :" + prsnc.getStatus());
                 }
-                
             });
         }
     }
 
-    /**
-     * 添加好友列表的功能:模拟数据
-     */
-    private void initFriends(){
-//        Container contentPane = friends
-        String[] zu = {"朋友", "客户"};
-        String[] friends = {"张三","汪小明","泰勒"};
-        String[] customer = {"慧明", "菲菲"};
-        Hashtable hashtable = new Hashtable();
-        hashtable.put(zu[0], friends);
-        hashtable.put(zu[1], customer);
-        JTree tree = new JTree(hashtable);
-        JScrollPane scrollPane = new JScrollPane();
-        scrollPane.setViewportView(tree);
-        jTabbedPane.addTab("好 友", scrollPane);
-    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -244,10 +241,10 @@ public class IChat extends javax.swing.JFrame {
     private javax.swing.JTabbedPane jTabbedPane;
     private javax.swing.JTextField jTextField2;
     // End of variables declaration//GEN-END:variables
-    
-    
     private XMPPConnection conn;
     private static IChat iChat;
     private Roster roster;
-
+    private List<String> groupsList = new ArrayList<String>();
+    public DefaultMutableTreeNode[] treeNode;
+    public DefaultMutableTreeNode top = new DefaultMutableTreeNode("好友");
 }
