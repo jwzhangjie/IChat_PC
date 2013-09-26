@@ -6,6 +6,7 @@ package com.ichat;
 
 import java.awt.Container;
 import java.awt.Font;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.logging.Level;
@@ -14,7 +15,12 @@ import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import org.jivesoftware.smack.Roster;
+import org.jivesoftware.smack.RosterEntry;
+import org.jivesoftware.smack.RosterGroup;
+import org.jivesoftware.smack.RosterListener;
 import org.jivesoftware.smack.XMPPConnection;
+import org.jivesoftware.smack.packet.Presence;
 
 /**
  *
@@ -33,6 +39,54 @@ public class IChat extends javax.swing.JFrame {
     
     public void setConnect(XMPPConnection conn){
         this.conn = conn;
+        getRoster();
+    }
+    /**
+     * 获取用户好友
+     */
+    public void getRoster(){
+        if(conn != null){
+            roster = conn.getRoster();
+            getRosterPresenceChange();
+           Collection<RosterGroup> groups = roster.getGroups();
+           for(RosterGroup group : groups){
+               System.out.println(group.getName());
+           }
+            Collection<RosterEntry> entries = roster.getEntries();
+            for(RosterEntry entry : entries){
+                System.out.println(entry);
+            }
+        }
+    }
+    
+    /**
+     * 注册监听状态变化
+     */
+    public void getRosterPresenceChange(){
+        if(roster != null){
+            roster.addRosterListener(new RosterListener(){
+                @Override
+                public void entriesAdded(Collection<String> addresses) {
+                    
+                }
+
+                @Override
+                public void entriesUpdated(Collection<String> addresses) {
+                    
+                }
+
+                @Override
+                public void entriesDeleted(Collection<String> addresses) {
+                    
+                }
+
+                @Override
+                public void presenceChanged(Presence prsnc) {
+                    System.out.println("Change: "+ prsnc.getFrom()+" status :"+prsnc.getStatus());
+                }
+                
+            });
+        }
     }
 
     /**
@@ -194,6 +248,6 @@ public class IChat extends javax.swing.JFrame {
     
     private XMPPConnection conn;
     private static IChat iChat;
-
+    private Roster roster;
 
 }
