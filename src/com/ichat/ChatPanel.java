@@ -5,14 +5,23 @@
 package com.ichat;
 
 import com.ichat.utils.DateUtils;
+import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import org.jivesoftware.smack.Chat;
 import org.jivesoftware.smack.ChatManager;
 import org.jivesoftware.smack.MessageListener;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smackx.filetransfer.FileTransfer.Status;
+import org.jivesoftware.smackx.filetransfer.FileTransferListener;
+import org.jivesoftware.smackx.filetransfer.FileTransferManager;
+import org.jivesoftware.smackx.filetransfer.FileTransferRequest;
+import org.jivesoftware.smackx.filetransfer.IncomingFileTransfer;
+import org.jivesoftware.smackx.filetransfer.OutgoingFileTransfer;
 
 /**
  *
@@ -20,13 +29,14 @@ import org.jivesoftware.smack.packet.Message;
  */
 public class ChatPanel extends javax.swing.JPanel {
 
-    public void setChatPanel(XMPPConnection conn, String frindsXmppAddress){
-        this.conn = conn;
-        this.frindsXmppAddress = frindsXmppAddress;
-        CreateChatM();
-        dateUtils = new DateUtils();
-        chatName.setText(frindsXmppAddress);
-    }
+public void setChatPanel(XMPPConnection conn, String frindsXmppAddress){
+    this.conn = conn;
+    this.frindsXmppAddress = frindsXmppAddress;
+    CreateChatM();
+    dateUtils = new DateUtils();
+    chatName.setText(frindsXmppAddress);
+    initTransFile();
+}
     /**
      * Creates new form ChatPanel
      */
@@ -59,6 +69,7 @@ public class ChatPanel extends javax.swing.JPanel {
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         chatName = new javax.swing.JLabel();
+        ChatFileTrans = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         ChatMessage = new javax.swing.JTextArea();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -72,15 +83,27 @@ public class ChatPanel extends javax.swing.JPanel {
 
         chatName.setText("jLabel2");
 
+        ChatFileTrans.setText("文件传输");
+        ChatFileTrans.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                ChatFileTransMouseClicked(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(chatName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(ChatFileTrans)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(chatName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -90,7 +113,9 @@ public class ChatPanel extends javax.swing.JPanel {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(chatName)
                     .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(46, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(ChatFileTrans)
+                .addContainerGap(13, Short.MAX_VALUE))
         );
 
         ChatMessage.setEditable(false);
@@ -150,8 +175,88 @@ public class ChatPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_SendChatBtnMouseClicked
 
+    private void ChatFileTransMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_ChatFileTransMouseClicked
+        int result = 0;
+       JFileChooser fileChooser = new JFileChooser();
+       File file = null;
+       fileChooser.setApproveButtonText("确定");
+       fileChooser.setDialogTitle("选择文件");
+       result = fileChooser.showOpenDialog(IChat.iChat);
+       if(result == JFileChooser.APPROVE_OPTION){
+           file = fileChooser.getSelectedFile();
+           seletFilePath = fileChooser.getSelectedFile().getName();
+           sendFile(file, seletFilePath);
+           System.out.println(seletFilePath);
+       }else{
+           seletFilePath = null;
+       }
+    }//GEN-LAST:event_ChatFileTransMouseClicked
+
+   private void initTransFile(){
+      fileManager = new FileTransferManager(conn);
+      fileManager.addFileTransferListener(new FileTransferListener(){
+          @Override
+          public void fileTransferRequest(FileTransferRequest request) {
+              int respone = JOptionPane.showConfirmDialog(null, frindsXmppAddress+"发送文件"+request.getFileName(), "发送文件", JOptionPane.YES_NO_OPTION);
+             if(respone == 0){
+                  try {
+                      // Accept it
+                     IncomingFileTransfer transfer = request.accept();
+                     transfer.recieveFile(new File(request.getFileName()));
+                     while(!transfer.isDone()){
+                        if(transfer.getStatus().equals(Status.error)){
+                            System.out.println("ERROR!!! " + transfer.getError());
+                        }else{
+                             System.out.println(transfer.getStatus()+"进度 "+transfer.getProgress());
+                        }
+                         Thread.sleep(1000); 
+                    }
+                  } catch (Exception ex) {
+                      Logger.getLogger(ChatPanel.class.getName()).log(Level.SEVERE, null, ex);
+                  }finally{
+                    if(transfer.getStatus().equals(Status.error)){
+                        ChatMessage.append(dateUtils.getHM()+"  自己: 接收出错"+"\n");
+                    }else if(transfer.getStatus().equals(Status.complete)){
+                         ChatMessage.append(dateUtils.getHM()+"  自己: "+request.getFileName()+" 接收完成\n");
+                    }else if(transfer.getStatus().equals(Status.cancelled)){
+                         ChatMessage.append(dateUtils.getHM()+" 自己  "+request.getFileName()+" 接收取消\n");
+                    }
+                }
+             }else{
+                 request.reject();
+             }
+          }
+      });
+   }
+   private void sendFile(File file, String fileName){
+        try {
+            if(JUID == null)
+                 JUID =  conn.getRoster().getEntry(frindsXmppAddress).getUser();
+            transfer = fileManager.createOutgoingFileTransfer(frindsXmppAddress+"/Spark 2.6.3");
+            transfer.sendFile(file, fileName);
+            while(!transfer.isDone()){
+                if(transfer.getStatus().equals(Status.error)){
+                    System.out.println("ERROR!!! " + transfer.getError());
+                }else{
+                     System.out.println(transfer.getStatus()+"进度 "+transfer.getProgress());
+                }
+                 Thread.sleep(1000); 
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }finally{
+            if(transfer.getStatus().equals(Status.error)){
+                ChatMessage.append(dateUtils.getHM()+"  自己: 传输出错"+"\n");
+            }else if(transfer.getStatus().equals(Status.complete)){
+                 ChatMessage.append(dateUtils.getHM()+"  自己: "+fileName+" 传输完成\n");
+            }else if(transfer.getStatus().equals(Status.cancelled)){
+                 ChatMessage.append(dateUtils.getHM()+frindsXmppAddress+"  "+fileName+" 传输取消\n");
+            }
+        }
+   }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextPane ChatContent;
+    private javax.swing.JButton ChatFileTrans;
     private javax.swing.JTextArea ChatMessage;
     private javax.swing.JButton SendChatBtn;
     private javax.swing.JLabel chatName;
@@ -166,4 +271,8 @@ public class ChatPanel extends javax.swing.JPanel {
  private ChatManager chatManager;
  private Chat chat;
  private DateUtils dateUtils; 
+ private String seletFilePath;
+ private FileTransferManager fileManager;
+ private OutgoingFileTransfer transfer;
+ private String JUID = null;
 }

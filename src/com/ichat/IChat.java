@@ -83,7 +83,7 @@ public class IChat extends javax.swing.JFrame {
                          }else if(note.isLeaf()){
                              System.out.println("叶节点  "+note.toString());
                              ChatPanel chatPanel = new ChatPanel();
-                             chatPanel.setChatPanel(conn, "123@zhangjie");
+                             chatPanel.setChatPanel(conn, note.toString()+"@zhangjie");
                              JDialog chatDialog = new JDialog();
                              chatDialog.setContentPane(chatPanel);
                              chatDialog.setSize(501, 512);
@@ -267,7 +267,7 @@ public class IChat extends javax.swing.JFrame {
     private javax.swing.JTextField jTextField2;
     // End of variables declaration//GEN-END:variables
     private XMPPConnection conn;
-    private static IChat iChat;
+    public static IChat iChat;
     private Roster roster;
     private List<String> groupsList = new ArrayList<String>();
     public DefaultMutableTreeNode[] treeNode;
