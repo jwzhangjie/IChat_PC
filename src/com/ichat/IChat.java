@@ -4,9 +4,12 @@
  */
 package com.ichat;
 
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import javax.swing.JDialog;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -69,7 +72,29 @@ public class IChat extends javax.swing.JFrame {
             for (i = 0; i < size; i++) {
                 top.add(treeNode[i]);
             }
-            JTree tree = new JTree(top);
+            tree = new JTree(top);
+            tree.addMouseListener(new MouseAdapter(){
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if(e.getClickCount() == 2){
+                         DefaultMutableTreeNode note=(DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
+                         if(note.isRoot()){
+                             System.out.println("root  "+note.toString());
+                         }else if(note.isLeaf()){
+                             System.out.println("叶节点  "+note.toString());
+                             ChatPanel chatPanel = new ChatPanel();
+                             chatPanel.setChatPanel(conn, "123@zhangjie");
+                             JDialog chatDialog = new JDialog();
+                             chatDialog.setContentPane(chatPanel);
+                             chatDialog.setSize(501, 512);
+                             chatDialog.setVisible(true);
+                         }else{
+                             System.out.println("枝节点  "+note.toString());
+                         }
+                    }
+                    super.mouseClicked(e); //To change body of generated methods, choose Tools | Templates.
+                }
+            });
             JScrollPane scrollPane = new JScrollPane();
             scrollPane.setViewportView(tree);
            jTabbedPane.addTab("好 友", scrollPane);
@@ -247,4 +272,5 @@ public class IChat extends javax.swing.JFrame {
     private List<String> groupsList = new ArrayList<String>();
     public DefaultMutableTreeNode[] treeNode;
     public DefaultMutableTreeNode top = new DefaultMutableTreeNode("好友");
+    private JTree tree;
 }
